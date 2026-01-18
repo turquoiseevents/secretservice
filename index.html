@@ -1,725 +1,343 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Delta Force Situation Center</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
-    }
-
-    body {
-      background: #05070b;
-      color: #e5e5e5;
-    }
-
-    .app {
-      display: grid;
-      grid-template-rows: 60px 1fr 40px;
-      height: 100vh;
-      grid-template-columns: 260px 1fr 320px;
-      grid-template-areas:
-        "header header header"
-        "sidebar main right"
-        "footer footer footer";
-      gap: 6px;
-      padding: 6px;
-    }
-
-    header {
-      grid-area: header;
-      background: linear-gradient(90deg, #0b1a2b, #071019);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      border-bottom: 1px solid #1f2a3a;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-size: 13px;
-    }
-
-    header .title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    header .badge {
-      border: 1px solid #ff3b3b;
-      color: #ff3b3b;
-      padding: 2px 8px;
-      font-size: 10px;
-      border-radius: 3px;
-    }
-
-    header .status {
-      font-size: 11px;
-      color: #7fd87f;
-    }
-
-    .sidebar {
-      grid-area: sidebar;
-      background: #050a12;
-      border: 1px solid #1b2635;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .panel-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: #8ea4c7;
-      margin-bottom: 6px;
-    }
-
-    .list {
-      background: #05070b;
-      border: 1px solid #1b2635;
-      padding: 8px;
-      font-size: 12px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .list-item {
-      padding: 4px 0;
-      border-bottom: 1px dashed #1b2635;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .list-item:last-child {
-      border-bottom: none;
-    }
-
-    .tag {
-      font-size: 10px;
-      padding: 1px 6px;
-      border-radius: 10px;
-      border: 1px solid #3b4f6a;
-      color: #9fb4d6;
-    }
-
-    .tag-critical {
-      border-color: #ff3b3b;
-      color: #ff7f7f;
-    }
-
-    .tag-warning {
-      border-color: #ffb347;
-      color: #ffdd99;
-    }
-
-    .tag-info {
-      border-color: #3bb3ff;
-      color: #8fd4ff;
-    }
-
-    .main {
-      grid-area: main;
-      background: #050a12;
-      border: 1px solid #1b2635;
-      padding: 10px;
-      display: grid;
-      grid-template-rows: 26px 1fr 120px;
-      gap: 8px;
-    }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: #8ea4c7;
-    }
-
-    .toolbar-buttons {
-      display: flex;
-      gap: 6px;
-    }
-
-    .btn {
-      border: 1px solid #1f2a3a;
-      background: #05070b;
-      color: #cfd8ea;
-      font-size: 10px;
-      padding: 3px 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      border-color: #3bb3ff;
-      color: #8fd4ff;
-    }
-
-    .map {
-      background: radial-gradient(circle at 50% 30%, #1b2738 0, #05070b 55%);
-      border: 1px solid #1b2635;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .map-grid {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(#1b263522 1px, transparent 1px),
-        linear-gradient(90deg, #1b263522 1px, transparent 1px);
-      background-size: 40px 40px;
-      opacity: 0.4;
-    }
-
-    .map-overlay {
-      position: absolute;
-      inset: 0;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      pointer-events: none;
-    }
-
-    .map-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: #8ea4c7;
-    }
-
-    .map-center-text {
-      align-self: center;
-      text-align: center;
-      font-size: 18px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: #cfd8ea;
-      text-shadow: 0 0 12px #3bb3ff55;
-    }
-
-    .map-pings {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
-    .ping {
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      border: 2px solid #ff3b3b;
-      box-shadow: 0 0 12px #ff3b3b;
-      animation: pingPulse 2.4s infinite ease-out;
-    }
-
-    .ping::after {
-      content: "";
-      position: absolute;
-      inset: -6px;
-      border-radius: 50%;
-      border: 1px solid #ff3b3b55;
-    }
-
-    .ping-green {
-      border-color: #7fd87f;
-      box-shadow: 0 0 12px #7fd87f;
-    }
-
-    .ping-green::after {
-      border-color: #7fd87f55;
-    }
-
-    .map-legend {
-      display: flex;
-      gap: 12px;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #8ea4c7;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .legend-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .legend-dot-critical {
-      background: #ff3b3b;
-      box-shadow: 0 0 6px #ff3b3b;
-    }
-
-    .legend-dot-active {
-      background: #3bb3ff;
-      box-shadow: 0 0 6px #3bb3ff;
-    }
-
-    .legend-dot-resolved {
-      background: #7fd87f;
-      box-shadow: 0 0 6px #7fd87f;
-    }
-
-    .timeline {
-      border: 1px solid #1b2635;
-      background: #05070b;
-      padding: 8px;
-      font-size: 11px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      overflow-y: auto;
-    }
-
-    .timeline-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 2px 0;
-      border-bottom: 1px dashed #1b2635;
-    }
-
-    .timeline-row:last-child {
-      border-bottom: none;
-    }
-
-    .timeline-time {
-      color: #8ea4c7;
-      font-size: 10px;
-    }
-
-    .timeline-text {
-      flex: 1;
-      margin: 0 8px;
-    }
-
-    .timeline-level {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-    }
-
-    .timeline-level-critical {
-      color: #ff7f7f;
-    }
-
-    .timeline-level-info {
-      color: #8fd4ff;
-    }
-
-    .timeline-level-normal {
-      color: #9fb4d6;
-    }
-
-    .right {
-      grid-area: right;
-      background: #050a12;
-      border: 1px solid #1b2635;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .stat-block {
-      background: #05070b;
-      border: 1px solid #1b2635;
-      padding: 8px;
-      font-size: 12px;
-    }
-
-    .stat-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 2px 0;
-    }
-
-    .stat-label {
-      color: #8ea4c7;
-      font-size: 11px;
-    }
-
-    .stat-value {
-      font-weight: 600;
-    }
-
-    .stat-value-critical {
-      color: #ff7f7f;
-    }
-
-    .stat-value-ok {
-      color: #7fd87f;
-    }
-
-    footer {
-      grid-area: footer;
-      background: #05070b;
-      border-top: 1px solid #1b2635;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 12px;
-      font-size: 11px;
-      color: #8ea4c7;
-    }
-
-    .footer-left span + span::before {
-      content: "•";
-      margin: 0 6px;
-      color: #1b2635;
-    }
-
-    .footer-right {
-      display: flex;
-      gap: 10px;
-    }
-
-    .indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .indicator-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #7fd87f;
-      box-shadow: 0 0 6px #7fd87f;
-    }
-
-    .indicator-dot-red {
-      background: #ff3b3b;
-      box-shadow: 0 0 6px #ff3b3b;
-    }
-
-    /* --- Radar sweep --- */
-    .radar-sweep {
-      position: absolute;
-      inset: 0;
-      background: conic-gradient(
-        from 0deg,
-        transparent 0deg,
-        rgba(0, 180, 255, 0.25) 45deg,
-        transparent 90deg
-      );
-      animation: sweep 6s linear infinite;
-      mix-blend-mode: screen;
-      pointer-events: none;
-    }
-
-    @keyframes sweep {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    /* --- Ping pulse --- */
-    @keyframes pingPulse {
-      0% { transform: scale(0.6); opacity: 1; }
-      70% { transform: scale(1.6); opacity: 0; }
-      100% { opacity: 0; }
-    }
-
-    /* --- UI flicker --- */
-    .flicker {
-      animation: flickerAnim 4s infinite;
-    }
-
-    @keyframes flickerAnim {
-      0%, 100% { opacity: 1; }
-      92% { opacity: 0.85; }
-      94% { opacity: 0.6; }
-      96% { opacity: 0.9; }
-    }
-
-    /* --- Blinking status lights --- */
-    .blink {
-      animation: blinkAnim 1.2s infinite;
-    }
-
-    @keyframes blinkAnim {
-      0%, 60% { opacity: 1; }
-      61%, 100% { opacity: 0.2; }
-    }
-
-    /* --- Live typing effect --- */
-    .typing {
-      border-right: 2px solid #8fd4ff;
-      animation: caret 0.7s infinite;
-    }
-
-    @keyframes caret {
-      0%, 50% { border-color: transparent; }
-      51%, 100% { border-color: #8fd4ff; }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Delta Force Situation Center — Ultra</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Consolas,monospace;}
+body{background:#05070b;color:#d7e2f0;overflow:hidden;}
+.app{display:grid;grid-template-columns:260px 1fr 320px;
+     grid-template-rows:60px 1fr 40px;
+     grid-template-areas:
+     "header header header"
+     "left map right"
+     "footer footer footer";
+     height:100vh;gap:6px;padding:6px;}
+header{grid-area:header;background:#0b1a2b;border-bottom:1px solid #1f2a3a;
+       display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+       text-transform:uppercase;letter-spacing:.15em;font-size:13px;}
+.badge{border:1px solid #ff3b3b;color:#ff3b3b;padding:2px 8px;font-size:10px;border-radius:3px;}
+.status{color:#7fd87f;font-size:11px;}
+.left{grid-area:left;background:#050a12;border:1px solid #1b2635;padding:10px;
+      display:flex;flex-direction:column;gap:14px;overflow:hidden;}
+.panel-title{text-transform:uppercase;font-size:11px;letter-spacing:.15em;color:#8ea4c7;margin-bottom:6px;}
+.list{border:1px solid #1b2635;background:#05070b;padding:8px;height:150px;overflow-y:auto;font-size:12px;}
+.list-item{padding:4px 0;border-bottom:1px dashed #1b2635;display:flex;justify-content:space-between;}
+.tag{font-size:10px;padding:1px 6px;border-radius:10px;border:1px solid #3b4f6a;}
+.tag-info{border-color:#3bb3ff;color:#8fd4ff;}
+.tag-critical{border-color:#ff3b3b;color:#ff7f7f;}
+.timeline{border:1px solid #1b2635;background:#05070b;padding:8px;height:140px;overflow-y:auto;font-size:11px;}
+.timeline-row{display:flex;justify-content:space-between;border-bottom:1px dashed #1b2635;padding:2px 0;}
+.timeline-time{color:#8ea4c7;font-size:10px;}
+.timeline-level-info{color:#8fd4ff;}
+.map-area{grid-area:map;position:relative;border:1px solid #1b2635;background:#071019;overflow:hidden;}
+.map-grid{position:absolute;inset:0;
+          background-image:
+          linear-gradient(#1b263522 1px,transparent 1px),
+          linear-gradient(90deg,#1b263522 1px,transparent 1px);
+          background-size:40px 40px;opacity:.4;animation:gridMove 12s linear infinite;}
+@keyframes gridMove{from{background-position:0 0;}to{background-position:200px 200px;}}
+.map-container{position:absolute;inset:0;transform-origin:center center;cursor:grab;}
+.map-container:active{cursor:grabbing;}
+.world-map{position:absolute;inset:10% 15%;background:#0b1724;border-radius:12px;
+           box-shadow:0 0 20px #000;}
+/* 3D rotating globe */
+.globe-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+            width:260px;height:260px;perspective:800px;}
+.globe{width:100%;height:100%;border-radius:50%;background:
+       radial-gradient(circle at 30% 30%,#3bb3ff,#071019 60%);
+       position:relative;transform-style:preserve-3d;
+       animation:spinGlobe 18s linear infinite;}
+.globe::before{content:"";position:absolute;inset:0;border-radius:50%;
+               background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.3) 0 2px,transparent 2px 8px),
+                                repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0 2px,transparent 2px 8px);
+               mix-blend-mode:multiply;opacity:.6;}
+@keyframes spinGlobe{from{transform:rotateY(0deg);}to{transform:rotateY(360deg);}}
+/* Satellite orbits */
+.orbit{position:absolute;top:50%;left:50%;width:260px;height:260px;border-radius:50%;
+       border:1px dashed rgba(191,224,255,.25);transform:translate(-50%,-50%) rotateX(65deg);}
+.sat{position:absolute;width:8px;height:8px;border-radius:50%;background:#ffb347;
+     box-shadow:0 0 8px #ffb347;}
+.sat1{animation:orbit1 10s linear infinite;}
+.sat2{animation:orbit2 14s linear infinite;}
+@keyframes orbit1{from{transform:rotateZ(0deg) translateX(130px);}to{transform:rotateZ(360deg) translateX(130px);}}
+@keyframes orbit2{from{transform:rotateZ(180deg) translateX(130px);}to{transform:rotateZ(540deg) translateX(130px);}}
+/* Signal waves */
+.signal{position:absolute;top:20%;left:70%;width:12px;height:12px;border-radius:50%;
+        border:2px solid #3bb3ff;}
+.signal::before,.signal::after{content:"";position:absolute;inset:-2px;border-radius:50%;
+                               border:1px solid rgba(59,179,255,.6);animation:wave 2.4s infinite;}
+.signal::after{animation-delay:1.2s;}
+@keyframes wave{0%{transform:scale(1);opacity:1;}100%{transform:scale(4);opacity:0;}}
+/* Particle sparks canvas */
+#sparks{position:absolute;inset:0;pointer-events:none;}
+/* Radar sweep */
+.radar{position:absolute;inset:0;
+       background:conic-gradient(from 0deg,transparent 0deg,rgba(0,200,255,.25) 45deg,transparent 90deg);
+       mix-blend-mode:screen;animation:sweep 6s linear infinite;}
+@keyframes sweep{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+/* Hotspots */
+.hotspot{position:absolute;width:10px;height:10px;border-radius:50%;
+         border:2px solid #ff3b3b;box-shadow:0 0 12px #ff3b3b;
+         animation:ping 2.4s infinite ease-out;}
+@keyframes ping{0%{transform:scale(.5);opacity:1;}70%{transform:scale(2);opacity:0;}100%{opacity:0;}}
+.right{grid-area:right;background:#050a12;border:1px solid #1b2635;padding:10px;
+       display:flex;flex-direction:column;gap:14px;}
+.stat-block{border:1px solid #1b2635;background:#05070b;padding:8px;font-size:12px;}
+.stat-row{display:flex;justify-content:space-between;padding:2px 0;}
+.counter{font-weight:bold;color:#8fd4ff;animation:counterPulse 1.5s infinite;}
+@keyframes counterPulse{0%{text-shadow:0 0 4px #3bb3ff;}50%{text-shadow:0 0 12px #3bb3ff;}100%{text-shadow:0 0 4px #3bb3ff;}}
+.stat-value-critical{color:#ff7f7f;}
+.stat-value-ok{color:#7fd87f;}
+/* Threat prediction visualizer */
+.threat-bars{display:flex;gap:6px;margin-top:6px;height:80px;align-items:flex-end;}
+.threat-bar{flex:1;background:linear-gradient(to top,#ff3b3b,#ffb347);border-radius:3px;
+            box-shadow:0 0 8px #ff3b3b;transform-origin:bottom;transform:scaleY(.2);
+            transition:transform .6s ease-out;}
+.threat-label{text-align:center;font-size:9px;margin-top:2px;color:#8ea4c7;}
+footer{grid-area:footer;background:#05070b;border-top:1px solid #1b2635;
+       display:flex;justify-content:space-between;align-items:center;padding:0 12px;font-size:11px;color:#8ea4c7;}
+.indicator-dot{width:8px;height:8px;border-radius:50%;background:#7fd87f;box-shadow:0 0 6px #7fd87f;}
+.indicator-dot-red{background:#ff3b3b;box-shadow:0 0 6px #ff3b3b;}
+</style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="title">
-        <span class="badge">DELTA FORCE</span>
-        <span>SITUATION CENTER</span>
-      </div>
-      <div class="status">
-        LIVE OPERATIONS FEED — ALL CHANNELS MONITORED
-      </div>
-    </header>
+<div class="app">
+<header>
+  <div><span class="badge">DELTA FORCE</span> SITUATION CENTER</div>
+  <div class="status">LIVE OPERATIONS FEED — ALL CHANNELS ACTIVE</div>
+</header>
 
-    <aside class="sidebar">
-      <div>
-        <div class="panel-title">Task queue</div>
-        <div class="list">
-          <div class="list-item">
-            <span>Secure perimeter grid A7</span>
-            <span class="tag tag-critical">PRIORITY 1</span>
-          </div>
-          <div class="list-item">
-            <span>Deploy recon drone to sector 4</span>
-            <span class="tag tag-warning">PRIORITY 2</span>
-          </div>
-          <div class="list-item">
-            <span>Update extraction route map</span>
-            <span class="tag tag-info">PLANNED</span>
-          </div>
-          <div class="list-item">
-            <span>Sync intel with HQ node</span>
-            <span class="tag">IN PROGRESS</span>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div class="panel-title">Problem log</div>
-        <div class="list">
-          <div class="list-item">
-            <span>Comms latency spike on channel 3</span>
-            <span class="tag tag-warning">DEGRADED</span>
-          </div>
-          <div class="list-item">
-            <span>Unknown signal near sector 9</span>
-            <span class="tag tag-critical">INVESTIGATE</span>
-          </div>
-          <div class="list-item">
-            <span>Satellite pass window closing</span>
-            <span class="tag">TIME-SENSITIVE</span>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <main class="main">
-      <div class="toolbar">
-        <span>World map overview</span>
-        <div class="toolbar-buttons">
-          <button class="btn">Layers</button>
-          <button class="btn">Filters</button>
-          <button class="btn btn-primary">Engage</button>
-        </div>
-      </div>
-
-      <section class="map">
-        <div class="map-grid"></div>
-        <div class="radar-sweep"></div>
-        <div class="map-overlay">
-          <div class="map-label">Global operations map</div>
-          <div class="map-center-text">WORLD MAP</div>
-          <div class="map-legend">
-            <div class="legend-item">
-              <span class="legend-dot legend-dot-critical"></span>
-              <span>Critical hotspots</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-dot legend-dot-active"></span>
-              <span>Active units</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-dot legend-dot-resolved"></span>
-              <span>Resolved zones</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="map-pings">
-          <div class="ping" style="top: 30%; left: 40%;"></div>
-          <div class="ping ping-green" style="top: 55%; left: 65%;"></div>
-          <div class="ping" style="top: 20%; left: 75%;"></div>
-          <div class="ping ping-green" style="top: 65%; left: 25%;"></div>
-        </div>
-      </section>
-
-      <section class="timeline">
-        <div class="panel-title">Recent events</div>
-        <div class="timeline-row">
-          <span class="timeline-time">14:32</span>
-          <span class="timeline-text">Unit BRAVO-3 reached checkpoint CHARLIE.</span>
-          <span class="timeline-level timeline-level-normal">OK</span>
-        </div>
-        <div class="timeline-row">
-          <span class="timeline-time">14:28</span>
-          <span class="timeline-text">Unidentified signal detected in sector 9B.</span>
-          <span class="timeline-level timeline-level-critical">CRITICAL</span>
-        </div>
-        <div class="timeline-row">
-          <span class="timeline-time">14:21</span>
-          <span class="timeline-text">Drone feed re-routed through backup relay.</span>
-          <span class="timeline-level timeline-level-info">INFO</span>
-        </div>
-        <div class="timeline-row">
-          <span class="timeline-time">14:10</span>
-          <span class="timeline-text">Extraction route updated for team ALPHA.</span>
-          <span class="timeline-level timeline-level-info">INFO</span>
-        </div>
-      </section>
-    </main>
-
-    <aside class="right">
-      <div>
-        <div class="panel-title">Situation summary</div>
-        <div class="stat-block">
-          <div class="stat-row">
-            <span class="stat-label">Active operations</span>
-            <span class="stat-value">7</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">Critical hotspots</span>
-            <span class="stat-value stat-value-critical">3</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">Teams deployed</span>
-            <span class="stat-value">12</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">Comms status</span>
-            <span class="stat-value stat-value-ok">STABLE</span>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div class="panel-title">Mission channels</div>
-        <div class="stat-block">
-          <div class="stat-row">
-            <span class="stat-label">ALPHA</span>
-            <span class="stat-value">ON TARGET</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">BRAVO</span>
-            <span class="stat-value">ADVANCING</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">CHARLIE</span>
-            <span class="stat-value stat-value-critical">HOLDING</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">DELTA</span>
-            <span class="stat-value">STANDBY</span>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <footer>
-      <div class="footer-left">
-        <span>MODE: LIVE</span>
-        <span>ENCRYPTION: ACTIVE</span>
-        <span>LOGGING: ENABLED</span>
-      </div>
-      <div class="footer-right">
-        <div class="indicator">
-          <span class="indicator-dot"></span>
-          <span>Systems nominal</span>
-        </div>
-        <div class="indicator">
-          <span class="indicator-dot indicator-dot-red"></span>
-          <span>3 critical alerts</span>
-        </div>
-      </div>
-    </footer>
+<div class="left">
+  <div>
+    <div class="panel-title">Task Queue</div>
+    <div class="list" id="taskList"></div>
   </div>
+  <div>
+    <div class="panel-title">Problem Log</div>
+    <div class="list" id="problemList"></div>
+  </div>
+  <div>
+    <div class="panel-title">Recent Events</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</div>
 
-  <script>
-    const timeline = document.querySelector(".timeline");
+<div class="map-area">
+  <canvas id="sparks"></canvas>
+  <div class="map-grid"></div>
+  <div class="map-container" id="mapContainer">
+    <div class="world-map"></div>
+    <div class="globe-wrap">
+      <div class="globe">
+        <div class="orbit">
+          <div class="sat sat1"></div>
+          <div class="sat sat2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="radar"></div>
+    <div class="signal"></div>
+    <div class="hotspot" id="h1"></div>
+    <div class="hotspot" id="h2"></div>
+    <div class="hotspot" id="h3"></div>
+  </div>
+</div>
 
-    const sampleEvents = [
-      "Satellite lock acquired on sector 12.",
-      "Thermal spike detected near grid C4.",
-      "BRAVO-2 requesting route recalculation.",
-      "Encrypted burst received from HQ.",
-      "Recon drone switching to night optics.",
-      "Movement detected along ridge line.",
-      "ALPHA team marking new waypoint.",
-    ];
+<div class="right">
+  <div>
+    <div class="panel-title">Live Counters</div>
+    <div class="stat-block">
+      <div class="stat-row"><span>Active Ops</span><span class="counter" id="ops">7</span></div>
+      <div class="stat-row"><span>Hotspots</span><span class="counter stat-value-critical" id="hotspots">3</span></div>
+      <div class="stat-row"><span>Teams Deployed</span><span class="counter" id="teams">12</span></div>
+      <div class="stat-row"><span>Comms Status</span><span class="stat-value-ok">STABLE</span></div>
+    </div>
+  </div>
+  <div>
+    <div class="panel-title">Threat Prediction</div>
+    <div class="stat-block">
+      <div class="threat-bars">
+        <div style="flex:1;text-align:center;">
+          <div class="threat-bar" id="threat1"></div>
+          <div class="threat-label">NORTH</div>
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div class="threat-bar" id="threat2"></div>
+          <div class="threat-label">EAST</div>
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div class="threat-bar" id="threat3"></div>
+          <div class="threat-label">SOUTH</div>
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div class="threat-bar" id="threat4"></div>
+          <div class="threat-label">WEST</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    function addEvent() {
-      const row = document.createElement("div");
-      row.className = "timeline-row typing";
+<footer>
+  <div>SYSTEMS NOMINAL — AUDIO CHANNELS OPEN</div>
+  <div><span class="indicator-dot"></span> <span class="indicator-dot-red"></span></div>
+</footer>
+</div>
 
-      const time = new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
-      const text = sampleEvents[Math.floor(Math.random() * sampleEvents.length)];
+<script>
+// basic data
+const tasks=["Secure grid A7","Deploy recon drone","Update extraction route","Sync intel with HQ","Verify sat uplink"];
+const problems=["Comms latency spike","Unknown signal detected","Satellite pass window closing","Thermal anomaly in sector D3"];
+const events=[
+  "Thermal spike detected in sector C4",
+  "Recon drone switching to night optics",
+  "Encrypted burst received from HQ",
+  "Movement detected along ridge line",
+  "Satellite lock acquired on sector 12",
+  "ALPHA team marking new waypoint",
+  "BRAVO-2 requesting route recalculation"
+];
+function fillList(id,arr,cls){
+  const box=document.getElementById(id);
+  arr.forEach(t=>{
+    const div=document.createElement("div");
+    div.className="list-item";
+    div.innerHTML=`<span>${t}</span><span class="tag ${cls}">ACTIVE</span>`;
+    box.append(div);
+  });
+}
+fillList("taskList",tasks,"tag-info");
+fillList("problemList",problems,"tag-critical");
 
-      row.innerHTML = `
-        <span class="timeline-time">${time}</span>
-        <span class="timeline-text">${text}</span>
-        <span class="timeline-level timeline-level-info">INFO</span>
-      `;
+// timeline
+function addEvent(){
+  const t=document.getElementById("timeline");
+  const row=document.createElement("div");
+  row.className="timeline-row";
+  const time=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  row.innerHTML=`<span class="timeline-time">${time}</span>
+                 <span>${events[Math.floor(Math.random()*events.length)]}</span>
+                 <span class="timeline-level-info">INFO</span>`;
+  t.prepend(row);
+}
+setInterval(addEvent,5000);
+addEvent();addEvent();addEvent();
 
-      const titleRow = timeline.querySelector(".panel-title");
-      if (titleRow && titleRow.parentElement === timeline) {
-        timeline.insertBefore(row, titleRow.nextSibling);
-      } else {
-        timeline.prepend(row);
-      }
+// hotspots move
+function moveHotspot(id){
+  const el=document.getElementById(id);
+  el.style.top=(15+Math.random()*60)+"%";
+  el.style.left=(20+Math.random()*60)+"%";
+}
+setInterval(()=>{moveHotspot("h1");moveHotspot("h2");moveHotspot("h3");},3000);
+moveHotspot("h1");moveHotspot("h2");moveHotspot("h3");
 
-      setTimeout(() => row.classList.remove("typing"), 2000);
-    }
+// counters
+function randomAdjust(id,min,max){
+  const el=document.getElementById(id);
+  let v=parseInt(el.innerText);
+  v+=Math.random()>0.5?1:-1;
+  if(v<min)v=min;if(v>max)v=max;
+  el.innerText=v;
+}
+setInterval(()=>{
+  randomAdjust("ops",4,15);
+  randomAdjust("hotspots",1,8);
+  randomAdjust("teams",5,20);
+},4000);
 
-    setInterval(addEvent, 5000);
+// threat prediction bars
+function updateThreats(){
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById("threat"+i);
+    const level=0.2+Math.random()*0.8;
+    el.style.transform="scaleY("+level.toFixed(2)+")";
+  }
+}
+setInterval(updateThreats,3500);
+updateThreats();
 
-    const indicators = document.querySelectorAll(".indicator-dot");
+// interactive zoom + pan
+const map=document.getElementById("mapContainer");
+let scale=1, originX=0, originY=0, isDown=false, startX=0, startY=0;
+map.addEventListener("wheel",e=>{
+  e.preventDefault();
+  const delta=e.deltaY>0?-0.1:0.1;
+  scale=Math.min(2.5,Math.max(0.7,scale+delta));
+  map.style.transform=`translate(${originX}px,${originY}px) scale(${scale})`;
+},{passive:false});
+map.addEventListener("mousedown",e=>{
+  isDown=true;startX=e.clientX-originX;startY=e.clientY-originY;
+});
+window.addEventListener("mouseup",()=>isDown=false);
+window.addEventListener("mousemove",e=>{
+  if(!isDown)return;
+  originX=e.clientX-startX;originY=e.clientY-startY;
+  map.style.transform=`translate(${originX}px,${originY}px) scale(${scale})`;
+});
 
-    setInterval(() => {
-      indicators.forEach(dot => {
-        if (Math.random() > 0.6) {
-          dot.classList.toggle("blink");
-        }
-      });
-    }, 800);
+// particle sparks
+const canvas=document.getElementById("sparks");
+const ctx=canvas.getContext("2d");
+function resizeCanvas(){canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;}
+window.addEventListener("resize",resizeCanvas);resizeCanvas();
+let particles=[];
+function spawnParticle(){
+  particles.push({
+    x:Math.random()*canvas.width,
+    y:Math.random()*canvas.height,
+    vx:(Math.random()-0.5)*0.4,
+    vy:-Math.random()*0.6,
+    life:40+Math.random()*40
+  });
+}
+function drawParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.life--;
+    ctx.fillStyle="rgba(255,180,80,"+(p.life/80)+")";
+    ctx.fillRect(p.x,p.y,2,2);
+  });
+  particles=particles.filter(p=>p.life>0);
+  requestAnimationFrame(drawParticles);
+}
+setInterval(spawnParticle,80);
+drawParticles();
 
-    const pings = document.querySelectorAll(".ping");
-
-    setInterval(() => {
-      pings.forEach(p => {
-        p.style.top = Math.floor(Math.random() * 80 + 10) + "%";
-        p.style.left = Math.floor(Math.random() * 80 + 10) + "%";
-      });
-    }, 4000);
-
-    const flickerTargets = document.querySelectorAll(".panel-title, header, footer");
-
-    setInterval(() => {
-      const t = flickerTargets[Math.floor(Math.random() * flickerTargets.length)];
-      t.classList.add("flicker");
-      setTimeout(() => t.classList.remove("flicker"), 600);
-    }, 3000);
-  </script>
+// ambient audio: static + beeps
+let audioCtx;
+function initAudio(){
+  if(audioCtx)return;
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  // static
+  const bufferSize=2*audioCtx.sampleRate;
+  const noiseBuffer=audioCtx.createBuffer(1,bufferSize,audioCtx.sampleRate);
+  const output=noiseBuffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){output[i]=(Math.random()*2-1)*0.08;}
+  const whiteNoise=audioCtx.createBufferSource();
+  whiteNoise.buffer=noiseBuffer;
+  whiteNoise.loop=true;
+  const filter=audioCtx.createBiquadFilter();
+  filter.type="bandpass";filter.frequency.value=2000;filter.Q.value=1;
+  const gain=audioCtx.createGain();gain.gain.value=0.25;
+  whiteNoise.connect(filter).connect(gain).connect(audioCtx.destination);
+  whiteNoise.start();
+  // random beeps
+  function beep(){
+    const osc=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    osc.frequency.value=600+Math.random()*400;
+    g.gain.setValueAtTime(0.15,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.15);
+    osc.connect(g).connect(audioCtx.destination);
+    osc.start();osc.stop(audioCtx.currentTime+0.2);
+  }
+  setInterval(()=>{if(Math.random()>0.6)beep();},2500);
+}
+window.addEventListener("click",initAudio,{once:true});
+</script>
 </body>
 </html>
 
+  
