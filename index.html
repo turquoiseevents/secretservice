@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Delta Force Situation Center — 3D Earth</title>
+<title>Delta Force Situation Center — 3D Earth Ops</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Consolas,monospace;}
 body{background:#05070b;color:#d7e2f0;overflow:hidden;}
@@ -63,9 +63,10 @@ header{
   overflow-y:auto;
   font-size:11px;
 }
-.timeline-row{display:flex;justify-content:space-between;border-bottom:1px dashed #1b2635;padding:2px 0;}
-.timeline-time{color:#8ea4c7;font-size:10px;}
-.timeline-level-info{color:#8fd4ff;}
+.timeline-row{padding:4px 0;border-bottom:1px dashed #1b2635;}
+.timeline-time{color:#8ea4c7;font-size:10px;display:block;margin-bottom:2px;}
+.timeline-coord{color:#ffb347;font-size:10px;}
+.timeline-level-info{color:#8fd4ff;font-size:10px;}
 .map-area{
   grid-area:map;
   position:relative;
@@ -118,10 +119,9 @@ header{
   position:absolute;
   top:50%;
   left:50%;
-  width:420px;
-  height:420px;
+  width:460px;
+  height:460px;
   transform:translate(-50%,-50%);
-  pointer-events:none;
 }
 .radar{
   position:absolute;
@@ -151,16 +151,6 @@ header{
 }
 .signal::after{animation-delay:1.2s;}
 @keyframes wave{0%{transform:scale(1);opacity:1;}100%{transform:scale(4);opacity:0;}}
-.hotspot{
-  position:absolute;
-  width:10px;
-  height:10px;
-  border-radius:50%;
-  border:2px solid #ff3b3b;
-  box-shadow:0 0 12px #ff3b3b;
-  animation:ping 2.4s infinite ease-out;
-}
-@keyframes ping{0%{transform:scale(.5);opacity:1;}70%{transform:scale(2);opacity:0;}100%{opacity:0;}}
 #sparks{
   position:absolute;
   inset:0;
@@ -210,6 +200,18 @@ footer{
 }
 .indicator-dot{width:8px;height:8px;border-radius:50%;background:#7fd87f;box-shadow:0 0 6px #7fd87f;}
 .indicator-dot-red{background:#ff3b3b;box-shadow:0 0 6px #ff3b3b;}
+/* 2D labels over globe */
+.marker-label{
+  position:absolute;
+  padding:2px 6px;
+  background:rgba(5,7,11,0.9);
+  border:1px solid #3bb3ff;
+  border-radius:3px;
+  font-size:10px;
+  pointer-events:none;
+  white-space:nowrap;
+}
+.marker-label span.coord{color:#ffb347;}
 </style>
 </head>
 <body>
@@ -229,7 +231,7 @@ footer{
       <div class="list" id="problemList"></div>
     </div>
     <div>
-      <div class="panel-title">Recent Events</div>
+      <div class="panel-title">Planet Events</div>
       <div class="timeline" id="timeline"></div>
     </div>
   </div>
@@ -246,9 +248,6 @@ footer{
     <div id="globe"></div>
     <div class="radar"></div>
     <div class="signal"></div>
-    <div class="hotspot" id="h1"></div>
-    <div class="hotspot" id="h2"></div>
-    <div class="hotspot" id="h3"></div>
 
     <div class="map-overlay-bottom">
       <div class="legend">
@@ -309,18 +308,17 @@ footer{
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// data
+// --- DATA WITH REAL COORDS (lat, lon) ---
+const planetEvents = [
+  { name:"Thermal spike",        lat:34.0,  lon:45.0,  level:"CRITICAL" },
+  { name:"Unknown signal",       lat:51.5,  lon:-0.1,  level:"INFO" },
+  { name:"Unit BRAVO contact",   lat:35.7,  lon:139.7, level:"CRITICAL" },
+  { name:"Drone recon",          lat:-33.9, lon:151.2, level:"INFO" },
+  { name:"Sat uplink window",    lat:40.7,  lon:-74.0, level:"INFO" }
+];
+
 const tasks=["Secure grid A7","Deploy recon drone","Update extraction route","Sync intel with HQ","Verify sat uplink"];
 const problems=["Comms latency spike","Unknown signal detected","Satellite pass window closing","Thermal anomaly in sector D3"];
-const events=[
-  "Thermal spike detected in sector C4",
-  "Recon drone switching to night optics",
-  "Encrypted burst received from HQ",
-  "Movement detected along ridge line",
-  "Satellite lock acquired on sector 12",
-  "ALPHA team marking new waypoint",
-  "BRAVO-2 requesting route recalculation"
-];
 
 function fillList(id,arr,cls){
   const box=document.getElementById(id);
@@ -334,30 +332,24 @@ function fillList(id,arr,cls){
 fillList("taskList",tasks,"tag-info");
 fillList("problemList",problems,"tag-critical");
 
-function addEvent(){
-  const t=document.getElementById("timeline");
+// timeline from planetEvents
+const timeline = document.getElementById("timeline");
+function renderTimelineEntry(ev){
   const row=document.createElement("div");
   row.className="timeline-row";
   const time=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
-  row.innerHTML=`<span class="timeline-time">${time}</span>
-                 <span>${events[Math.floor(Math.random()*events.length)]}</span>
-                 <span class="timeline-level-info">INFO</span>`;
-  t.prepend(row);
+  row.innerHTML = `
+    <span class="timeline-time">${time}</span>
+    <div>${ev.name} — <span class="timeline-level-info">${ev.level}</span></div>
+    <div class="timeline-coord">Lat: ${ev.lat.toFixed(1)}°, Lon: ${ev.lon.toFixed(1)}°</div>
+  `;
+  timeline.prepend(row);
 }
-addEvent();addEvent();addEvent();
-setInterval(addEvent,5000);
-
-// hotspots
-function moveHotspot(id){
-  const el=document.getElementById(id);
-  el.style.top=(20+Math.random()*55)+"%";
-  el.style.left=(20+Math.random()*55)+"%";
-}
-function moveAllHotspots(){
-  moveHotspot("h1");moveHotspot("h2");moveHotspot("h3");
-}
-moveAllHotspots();
-setInterval(moveAllHotspots,3200);
+planetEvents.forEach(e=>renderTimelineEntry(e));
+setInterval(()=>{
+  const ev = planetEvents[Math.floor(Math.random()*planetEvents.length)];
+  renderTimelineEntry(ev);
+},6000);
 
 // counters
 function randomAdjust(id,min,max){
@@ -412,7 +404,7 @@ function drawParticles(){
 setInterval(spawnParticle,80);
 drawParticles();
 
-// 3D Earth with Three.js
+// --- 3D EARTH WITH MARKERS ---
 const container=document.getElementById("globe");
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(
@@ -428,6 +420,7 @@ renderer.setSize(container.clientWidth,container.clientHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 container.appendChild(renderer.domElement);
 
+// Earth
 const geometry=new THREE.SphereGeometry(1,64,64);
 const texture=new THREE.TextureLoader().load(
   "https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg"
@@ -439,15 +432,82 @@ const material=new THREE.MeshPhongMaterial({
 const earth=new THREE.Mesh(geometry,material);
 scene.add(earth);
 
+// simple orbit ring for live graphic
+const orbitGeom = new THREE.RingGeometry(1.15,1.17,64);
+const orbitMat  = new THREE.MeshBasicMaterial({color:0x3bb3ff,side:THREE.DoubleSide,transparent:true,opacity:0.35});
+const orbitRing = new THREE.Mesh(orbitGeom,orbitMat);
+orbitRing.rotation.x = Math.PI/3;
+scene.add(orbitRing);
+
+// lights
 const light=new THREE.PointLight(0xffffff,1.2);
 light.position.set(5,3,5);
 scene.add(light);
 const ambient=new THREE.AmbientLight(0x404040,0.6);
 scene.add(ambient);
 
+// markers on globe
+const markerGroup = new THREE.Group();
+scene.add(markerGroup);
+const markerMaterial = new THREE.MeshBasicMaterial({color:0xff3b3b});
+const markerPulseMaterial = new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:0.6});
+const markerLabels = [];
+
+function latLonToVector3(lat,lon,radius){
+  const phi = (90 - lat) * (Math.PI/180);
+  const theta = (lon + 180) * (Math.PI/180);
+  const x = -radius * Math.sin(phi) * Math.cos(theta);
+  const z =  radius * Math.sin(phi) * Math.sin(theta);
+  const y =  radius * Math.cos(phi);
+  return new THREE.Vector3(x,y,z);
+}
+
+planetEvents.forEach((ev,i)=>{
+  const base = new THREE.Mesh(new THREE.SphereGeometry(0.03,16,16), markerMaterial);
+  const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.05,16,16), markerPulseMaterial);
+  const pos = latLonToVector3(ev.lat,ev.lon,1.02);
+  base.position.copy(pos);
+  pulse.position.copy(pos);
+  markerGroup.add(base);
+  markerGroup.add(pulse);
+
+  // 2D label
+  const label = document.createElement("div");
+  label.className = "marker-label";
+  label.innerHTML = `<strong>${ev.name}</strong><br><span class="coord">${ev.lat.toFixed(1)}°, ${ev.lon.toFixed(1)}°</span>`;
+  container.appendChild(label);
+  markerLabels.push({mesh:base,label});
+});
+
+// animate
+const clock = new THREE.Clock();
 function animate(){
   requestAnimationFrame(animate);
-  earth.rotation.y+=0.0025;
+  const t = clock.getElapsedTime();
+
+  earth.rotation.y += 0.0025;
+  markerGroup.rotation.y += 0.0025;
+  orbitRing.rotation.z += 0.0008;
+
+  // pulse markers
+  markerGroup.children.forEach((m,idx)=>{
+    if(idx%2===1){ // pulse spheres
+      const s = 1 + 0.4*Math.sin(t*3 + idx);
+      m.scale.set(s,s,s);
+      m.material.opacity = 0.3 + 0.3*(1+Math.sin(t*3+idx))/2;
+    }
+  });
+
+  // project labels
+  markerLabels.forEach(({mesh,label})=>{
+    const vector = mesh.position.clone();
+    vector.project(camera);
+    const x = (vector.x * 0.5 + 0.5) * container.clientWidth;
+    const y = (-vector.y * 0.5 + 0.5) * container.clientHeight;
+    label.style.transform = `translate(-50%, -50%) translate(${x}px,${y}px)`;
+    label.style.opacity = vector.z > 0 ? "1" : "0"; // hide when behind planet
+  });
+
   renderer.render(scene,camera);
 }
 animate();
