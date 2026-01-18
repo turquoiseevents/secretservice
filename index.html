@@ -221,6 +221,7 @@
       border-radius: 50%;
       border: 2px solid #ff3b3b;
       box-shadow: 0 0 12px #ff3b3b;
+      animation: pingPulse 2.4s infinite ease-out;
     }
 
     .ping::after {
@@ -284,6 +285,7 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
+      overflow-y: auto;
     }
 
     .timeline-row {
@@ -407,6 +409,66 @@
       background: #ff3b3b;
       box-shadow: 0 0 6px #ff3b3b;
     }
+
+    /* --- Radar sweep --- */
+    .radar-sweep {
+      position: absolute;
+      inset: 0;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        rgba(0, 180, 255, 0.25) 45deg,
+        transparent 90deg
+      );
+      animation: sweep 6s linear infinite;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    @keyframes sweep {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* --- Ping pulse --- */
+    @keyframes pingPulse {
+      0% { transform: scale(0.6); opacity: 1; }
+      70% { transform: scale(1.6); opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    /* --- UI flicker --- */
+    .flicker {
+      animation: flickerAnim 4s infinite;
+    }
+
+    @keyframes flickerAnim {
+      0%, 100% { opacity: 1; }
+      92% { opacity: 0.85; }
+      94% { opacity: 0.6; }
+      96% { opacity: 0.9; }
+    }
+
+    /* --- Blinking status lights --- */
+    .blink {
+      animation: blinkAnim 1.2s infinite;
+    }
+
+    @keyframes blinkAnim {
+      0%, 60% { opacity: 1; }
+      61%, 100% { opacity: 0.2; }
+    }
+
+    /* --- Live typing effect --- */
+    .typing {
+      border-right: 2px solid #8fd4ff;
+      animation: caret 0.7s infinite;
+    }
+
+    @keyframes caret {
+      0%, 50% { border-color: transparent; }
+      51%, 100% { border-color: #8fd4ff; }
+    }
   </style>
 </head>
 <body>
@@ -475,6 +537,7 @@
 
       <section class="map">
         <div class="map-grid"></div>
+        <div class="radar-sweep"></div>
         <div class="map-overlay">
           <div class="map-label">Global operations map</div>
           <div class="map-center-text">WORLD MAP</div>
@@ -495,7 +558,6 @@
         </div>
 
         <div class="map-pings">
-          <!-- Example “points” on the map -->
           <div class="ping" style="top: 30%; left: 40%;"></div>
           <div class="ping ping-green" style="top: 55%; left: 65%;"></div>
           <div class="ping" style="top: 20%; left: 75%;"></div>
@@ -592,5 +654,72 @@
       </div>
     </footer>
   </div>
+
+  <script>
+    const timeline = document.querySelector(".timeline");
+
+    const sampleEvents = [
+      "Satellite lock acquired on sector 12.",
+      "Thermal spike detected near grid C4.",
+      "BRAVO-2 requesting route recalculation.",
+      "Encrypted burst received from HQ.",
+      "Recon drone switching to night optics.",
+      "Movement detected along ridge line.",
+      "ALPHA team marking new waypoint.",
+    ];
+
+    function addEvent() {
+      const row = document.createElement("div");
+      row.className = "timeline-row typing";
+
+      const time = new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+      const text = sampleEvents[Math.floor(Math.random() * sampleEvents.length)];
+
+      row.innerHTML = `
+        <span class="timeline-time">${time}</span>
+        <span class="timeline-text">${text}</span>
+        <span class="timeline-level timeline-level-info">INFO</span>
+      `;
+
+      const titleRow = timeline.querySelector(".panel-title");
+      if (titleRow && titleRow.parentElement === timeline) {
+        timeline.insertBefore(row, titleRow.nextSibling);
+      } else {
+        timeline.prepend(row);
+      }
+
+      setTimeout(() => row.classList.remove("typing"), 2000);
+    }
+
+    setInterval(addEvent, 5000);
+
+    const indicators = document.querySelectorAll(".indicator-dot");
+
+    setInterval(() => {
+      indicators.forEach(dot => {
+        if (Math.random() > 0.6) {
+          dot.classList.toggle("blink");
+        }
+      });
+    }, 800);
+
+    const pings = document.querySelectorAll(".ping");
+
+    setInterval(() => {
+      pings.forEach(p => {
+        p.style.top = Math.floor(Math.random() * 80 + 10) + "%";
+        p.style.left = Math.floor(Math.random() * 80 + 10) + "%";
+      });
+    }, 4000);
+
+    const flickerTargets = document.querySelectorAll(".panel-title, header, footer");
+
+    setInterval(() => {
+      const t = flickerTargets[Math.floor(Math.random() * flickerTargets.length)];
+      t.classList.add("flicker");
+      setTimeout(() => t.classList.remove("flicker"), 600);
+    }, 3000);
+  </script>
 </body>
 </html>
+
