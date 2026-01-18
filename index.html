@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Delta Force Situation Center</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      background: #05070b;
+      color: #e5e5e5;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: 60px 1fr 40px;
+      height: 100vh;
+      grid-template-columns: 260px 1fr 320px;
+      grid-template-areas:
+        "header header header"
+        "sidebar main right"
+        "footer footer footer";
+      gap: 6px;
+      padding: 6px;
+    }
+
+    header {
+      grid-area: header;
+      background: linear-gradient(90deg, #0b1a2b, #071019);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid #1f2a3a;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 13px;
+    }
+
+    header .title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header .badge {
+      border: 1px solid #ff3b3b;
+      color: #ff3b3b;
+      padding: 2px 8px;
+      font-size: 10px;
+      border-radius: 3px;
+    }
+
+    header .status {
+      font-size: 11px;
+      color: #7fd87f;
+    }
+
+    .sidebar {
+      grid-area: sidebar;
+      background: #050a12;
+      border: 1px solid #1b2635;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #8ea4c7;
+      margin-bottom: 6px;
+    }
+
+    .list {
+      background: #05070b;
+      border: 1px solid #1b2635;
+      padding: 8px;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .list-item {
+      padding: 4px 0;
+      border-bottom: 1px dashed #1b2635;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .tag {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      border: 1px solid #3b4f6a;
+      color: #9fb4d6;
+    }
+
+    .tag-critical {
+      border-color: #ff3b3b;
+      color: #ff7f7f;
+    }
+
+    .tag-warning {
+      border-color: #ffb347;
+      color: #ffdd99;
+    }
+
+    .tag-info {
+      border-color: #3bb3ff;
+      color: #8fd4ff;
+    }
+
+    .main {
+      grid-area: main;
+      background: #050a12;
+      border: 1px solid #1b2635;
+      padding: 10px;
+      display: grid;
+      grid-template-rows: 26px 1fr 120px;
+      gap: 8px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #8ea4c7;
+    }
+
+    .toolbar-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn {
+      border: 1px solid #1f2a3a;
+      background: #05070b;
+      color: #cfd8ea;
+      font-size: 10px;
+      padding: 3px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      border-color: #3bb3ff;
+      color: #8fd4ff;
+    }
+
+    .map {
+      background: radial-gradient(circle at 50% 30%, #1b2738 0, #05070b 55%);
+      border: 1px solid #1b2635;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .map-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(#1b263522 1px, transparent 1px),
+        linear-gradient(90deg, #1b263522 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.4;
+    }
+
+    .map-overlay {
+      position: absolute;
+      inset: 0;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .map-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #8ea4c7;
+    }
+
+    .map-center-text {
+      align-self: center;
+      text-align: center;
+      font-size: 18px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #cfd8ea;
+      text-shadow: 0 0 12px #3bb3ff55;
+    }
+
+    .map-pings {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .ping {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #ff3b3b;
+      box-shadow: 0 0 12px #ff3b3b;
+    }
+
+    .ping::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px solid #ff3b3b55;
+    }
+
+    .ping-green {
+      border-color: #7fd87f;
+      box-shadow: 0 0 12px #7fd87f;
+    }
+
+    .ping-green::after {
+      border-color: #7fd87f55;
+    }
+
+    .map-legend {
+      display: flex;
+      gap: 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #8ea4c7;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .legend-dot-critical {
+      background: #ff3b3b;
+      box-shadow: 0 0 6px #ff3b3b;
+    }
+
+    .legend-dot-active {
+      background: #3bb3ff;
+      box-shadow: 0 0 6px #3bb3ff;
+    }
+
+    .legend-dot-resolved {
+      background: #7fd87f;
+      box-shadow: 0 0 6px #7fd87f;
+    }
+
+    .timeline {
+      border: 1px solid #1b2635;
+      background: #05070b;
+      padding: 8px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .timeline-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 0;
+      border-bottom: 1px dashed #1b2635;
+    }
+
+    .timeline-row:last-child {
+      border-bottom: none;
+    }
+
+    .timeline-time {
+      color: #8ea4c7;
+      font-size: 10px;
+    }
+
+    .timeline-text {
+      flex: 1;
+      margin: 0 8px;
+    }
+
+    .timeline-level {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .timeline-level-critical {
+      color: #ff7f7f;
+    }
+
+    .timeline-level-info {
+      color: #8fd4ff;
+    }
+
+    .timeline-level-normal {
+      color: #9fb4d6;
+    }
+
+    .right {
+      grid-area: right;
+      background: #050a12;
+      border: 1px solid #1b2635;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .stat-block {
+      background: #05070b;
+      border: 1px solid #1b2635;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0;
+    }
+
+    .stat-label {
+      color: #8ea4c7;
+      font-size: 11px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+    }
+
+    .stat-value-critical {
+      color: #ff7f7f;
+    }
+
+    .stat-value-ok {
+      color: #7fd87f;
+    }
+
+    footer {
+      grid-area: footer;
+      background: #05070b;
+      border-top: 1px solid #1b2635;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 11px;
+      color: #8ea4c7;
+    }
+
+    .footer-left span + span::before {
+      content: "•";
+      margin: 0 6px;
+      color: #1b2635;
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 10px;
+    }
+
+    .indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #7fd87f;
+      box-shadow: 0 0 6px #7fd87f;
+    }
+
+    .indicator-dot-red {
+      background: #ff3b3b;
+      box-shadow: 0 0 6px #ff3b3b;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <span class="badge">DELTA FORCE</span>
+        <span>SITUATION CENTER</span>
+      </div>
+      <div class="status">
+        LIVE OPERATIONS FEED — ALL CHANNELS MONITORED
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <div>
+        <div class="panel-title">Task queue</div>
+        <div class="list">
+          <div class="list-item">
+            <span>Secure perimeter grid A7</span>
+            <span class="tag tag-critical">PRIORITY 1</span>
+          </div>
+          <div class="list-item">
+            <span>Deploy recon drone to sector 4</span>
+            <span class="tag tag-warning">PRIORITY 2</span>
+          </div>
+          <div class="list-item">
+            <span>Update extraction route map</span>
+            <span class="tag tag-info">PLANNED</span>
+          </div>
+          <div class="list-item">
+            <span>Sync intel with HQ node</span>
+            <span class="tag">IN PROGRESS</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel-title">Problem log</div>
+        <div class="list">
+          <div class="list-item">
+            <span>Comms latency spike on channel 3</span>
+            <span class="tag tag-warning">DEGRADED</span>
+          </div>
+          <div class="list-item">
+            <span>Unknown signal near sector 9</span>
+            <span class="tag tag-critical">INVESTIGATE</span>
+          </div>
+          <div class="list-item">
+            <span>Satellite pass window closing</span>
+            <span class="tag">TIME-SENSITIVE</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="toolbar">
+        <span>World map overview</span>
+        <div class="toolbar-buttons">
+          <button class="btn">Layers</button>
+          <button class="btn">Filters</button>
+          <button class="btn btn-primary">Engage</button>
+        </div>
+      </div>
+
+      <section class="map">
+        <div class="map-grid"></div>
+        <div class="map-overlay">
+          <div class="map-label">Global operations map</div>
+          <div class="map-center-text">WORLD MAP</div>
+          <div class="map-legend">
+            <div class="legend-item">
+              <span class="legend-dot legend-dot-critical"></span>
+              <span>Critical hotspots</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot legend-dot-active"></span>
+              <span>Active units</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot legend-dot-resolved"></span>
+              <span>Resolved zones</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-pings">
+          <!-- Example “points” on the map -->
+          <div class="ping" style="top: 30%; left: 40%;"></div>
+          <div class="ping ping-green" style="top: 55%; left: 65%;"></div>
+          <div class="ping" style="top: 20%; left: 75%;"></div>
+          <div class="ping ping-green" style="top: 65%; left: 25%;"></div>
+        </div>
+      </section>
+
+      <section class="timeline">
+        <div class="panel-title">Recent events</div>
+        <div class="timeline-row">
+          <span class="timeline-time">14:32</span>
+          <span class="timeline-text">Unit BRAVO-3 reached checkpoint CHARLIE.</span>
+          <span class="timeline-level timeline-level-normal">OK</span>
+        </div>
+        <div class="timeline-row">
+          <span class="timeline-time">14:28</span>
+          <span class="timeline-text">Unidentified signal detected in sector 9B.</span>
+          <span class="timeline-level timeline-level-critical">CRITICAL</span>
+        </div>
+        <div class="timeline-row">
+          <span class="timeline-time">14:21</span>
+          <span class="timeline-text">Drone feed re-routed through backup relay.</span>
+          <span class="timeline-level timeline-level-info">INFO</span>
+        </div>
+        <div class="timeline-row">
+          <span class="timeline-time">14:10</span>
+          <span class="timeline-text">Extraction route updated for team ALPHA.</span>
+          <span class="timeline-level timeline-level-info">INFO</span>
+        </div>
+      </section>
+    </main>
+
+    <aside class="right">
+      <div>
+        <div class="panel-title">Situation summary</div>
+        <div class="stat-block">
+          <div class="stat-row">
+            <span class="stat-label">Active operations</span>
+            <span class="stat-value">7</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Critical hotspots</span>
+            <span class="stat-value stat-value-critical">3</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Teams deployed</span>
+            <span class="stat-value">12</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Comms status</span>
+            <span class="stat-value stat-value-ok">STABLE</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel-title">Mission channels</div>
+        <div class="stat-block">
+          <div class="stat-row">
+            <span class="stat-label">ALPHA</span>
+            <span class="stat-value">ON TARGET</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">BRAVO</span>
+            <span class="stat-value">ADVANCING</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">CHARLIE</span>
+            <span class="stat-value stat-value-critical">HOLDING</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">DELTA</span>
+            <span class="stat-value">STANDBY</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <footer>
+      <div class="footer-left">
+        <span>MODE: LIVE</span>
+        <span>ENCRYPTION: ACTIVE</span>
+        <span>LOGGING: ENABLED</span>
+      </div>
+      <div class="footer-right">
+        <div class="indicator">
+          <span class="indicator-dot"></span>
+          <span>Systems nominal</span>
+        </div>
+        <div class="indicator">
+          <span class="indicator-dot indicator-dot-red"></span>
+          <span>3 critical alerts</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
