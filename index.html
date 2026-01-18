@@ -2,551 +2,83 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Delta Force Situation Center — 3D Earth Ops</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Consolas,monospace;}
-body{background:#05070b;color:#d7e2f0;overflow:hidden;}
-.app{
-  display:grid;
-  grid-template-columns:260px 1fr 320px;
-  grid-template-rows:60px 1fr 40px;
-  grid-template-areas:
-    "header header header"
-    "left map right"
-    "footer footer footer";
-  height:100vh;
-  gap:6px;
-  padding:6px;
-}
-header{
-  grid-area:header;
-  background:#0b1a2b;
-  border-bottom:1px solid #1f2a3a;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 16px;
-  text-transform:uppercase;
-  letter-spacing:.15em;
-  font-size:13px;
-}
-.badge{border:1px solid #ff3b3b;color:#ff3b3b;padding:2px 8px;font-size:10px;border-radius:3px;}
-.status{color:#7fd87f;font-size:11px;}
-.left{
-  grid-area:left;
-  background:#050a12;
-  border:1px solid #1b2635;
-  padding:10px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  overflow:hidden;
-}
-.panel-title{text-transform:uppercase;font-size:11px;letter-spacing:.15em;color:#8ea4c7;margin-bottom:6px;}
-.list{
-  border:1px solid #1b2635;
-  background:#05070b;
-  padding:8px;
-  height:150px;
-  overflow-y:auto;
-  font-size:12px;
-}
-.list-item{padding:4px 0;border-bottom:1px dashed #1b2635;display:flex;justify-content:space-between;}
-.tag{font-size:10px;padding:1px 6px;border-radius:10px;border:1px solid #3b4f6a;}
-.tag-info{border-color:#3bb3ff;color:#8fd4ff;}
-.tag-critical{border-color:#ff3b3b;color:#ff7f7f;}
-.timeline{
-  border:1px solid #1b2635;
-  background:#05070b;
-  padding:8px;
-  height:140px;
-  overflow-y:auto;
-  font-size:11px;
-}
-.timeline-row{padding:4px 0;border-bottom:1px dashed #1b2635;}
-.timeline-time{color:#8ea4c7;font-size:10px;display:block;margin-bottom:2px;}
-.timeline-coord{color:#ffb347;font-size:10px;}
-.timeline-level-info{color:#8fd4ff;font-size:10px;}
-.map-area{
-  grid-area:map;
-  position:relative;
-  border:1px solid #1b2635;
-  background:#05070b;
-  overflow:hidden;
-}
-.map-grid{
-  position:absolute;
-  inset:0;
-  background-image:
-    linear-gradient(#1b263522 1px,transparent 1px),
-    linear-gradient(90deg,#1b263522 1px,transparent 1px);
-  background-size:40px 40px;
-  opacity:.35;
-  animation:gridMove 18s linear infinite;
-}
-@keyframes gridMove{from{background-position:0 0;}to{background-position:200px 200px;}}
-.map-overlay-top{
-  position:absolute;
-  top:8px;
-  left:12px;
-  right:12px;
-  display:flex;
-  justify-content:space-between;
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:.15em;
-  color:#8ea4c7;
-}
-.map-overlay-bottom{
-  position:absolute;
-  bottom:8px;
-  left:12px;
-  right:12px;
-  display:flex;
-  justify-content:space-between;
-  font-size:10px;
-  text-transform:uppercase;
-  letter-spacing:.12em;
-  color:#8ea4c7;
-}
-.legend{display:flex;gap:10px;}
-.legend-item{display:flex;align-items:center;gap:4px;}
-.legend-dot{width:8px;height:8px;border-radius:50%;}
-.legend-dot-critical{background:#ff3b3b;box-shadow:0 0 6px #ff3b3b;}
-.legend-dot-active{background:#3bb3ff;box-shadow:0 0 6px #3bb3ff;}
-.legend-dot-resolved{background:#7fd87f;box-shadow:0 0 6px #7fd87f;}
-#globe{
-  position:absolute;
-  top:50%;
-  left:50%;
-  width:460px;
-  height:460px;
-  transform:translate(-50%,-50%);
-}
-.radar{
-  position:absolute;
-  inset:0;
-  background:conic-gradient(from 0deg,transparent 0deg,rgba(0,200,255,.25) 45deg,transparent 90deg);
-  mix-blend-mode:screen;
-  animation:sweep 7s linear infinite;
-  pointer-events:none;
-}
-@keyframes sweep{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-.signal{
-  position:absolute;
-  top:22%;
-  left:72%;
-  width:12px;
-  height:12px;
-  border-radius:50%;
-  border:2px solid #3bb3ff;
-}
-.signal::before,.signal::after{
-  content:"";
-  position:absolute;
-  inset:-2px;
-  border-radius:50%;
-  border:1px solid rgba(59,179,255,.6);
-  animation:wave 2.4s infinite;
-}
-.signal::after{animation-delay:1.2s;}
-@keyframes wave{0%{transform:scale(1);opacity:1;}100%{transform:scale(4);opacity:0;}}
-#sparks{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-}
-.right{
-  grid-area:right;
-  background:#050a12;
-  border:1px solid #1b2635;
-  padding:10px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-.stat-block{
-  border:1px solid #1b2635;
-  background:#05070b;
-  padding:8px;
-  font-size:12px;
-}
-.stat-row{display:flex;justify-content:space-between;padding:2px 0;}
-.counter{font-weight:bold;color:#8fd4ff;animation:counterPulse 1.5s infinite;}
-@keyframes counterPulse{0%{text-shadow:0 0 4px #3bb3ff;}50%{text-shadow:0 0 12px #3bb3ff;}100%{text-shadow:0 0 4px #3bb3ff;}}
-.stat-value-critical{color:#ff7f7f;}
-.stat-value-ok{color:#7fd87f;}
-.threat-bars{display:flex;gap:6px;margin-top:6px;height:80px;align-items:flex-end;}
-.threat-bar{
-  flex:1;
-  background:linear-gradient(to top,#ff3b3b,#ffb347);
-  border-radius:3px;
-  box-shadow:0 0 8px #ff3b3b;
-  transform-origin:bottom;
-  transform:scaleY(.2);
-  transition:transform .6s ease-out;
-}
-.threat-label{text-align:center;font-size:9px;margin-top:2px;color:#8ea4c7;}
-footer{
-  grid-area:footer;
-  background:#05070b;
-  border-top:1px solid #1b2635;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:0 12px;
-  font-size:11px;
-  color:#8ea4c7;
-}
-.indicator-dot{width:8px;height:8px;border-radius:50%;background:#7fd87f;box-shadow:0 0 6px #7fd87f;}
-.indicator-dot-red{background:#ff3b3b;box-shadow:0 0 6px #ff3b3b;}
-/* 2D labels over globe */
-.marker-label{
-  position:absolute;
-  padding:2px 6px;
-  background:rgba(5,7,11,0.9);
-  border:1px solid #3bb3ff;
-  border-radius:3px;
-  font-size:10px;
-  pointer-events:none;
-  white-space:nowrap;
-}
-.marker-label span.coord{color:#ffb347;}
-</style>
+<title>Delta Force Situation Center — Crisis Mode</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div class="app">
-  <header>
-    <div><span class="badge">DELTA FORCE</span> SITUATION CENTER</div>
-    <div class="status">GLOBAL OPERATIONS — LIVE 3D EARTH FEED</div>
+
+  <header class="header">
+    <div class="header-left">
+      <span class="badge">DELTA FORCE</span> SITUATION CENTER
+    </div>
+    <div class="header-right">
+      <span class="status-critical">MISSION STATUS: CRITICAL</span>
+      <span class="tri">&#9650;</span><span class="tri">&#9650;</span><span class="tri">&#9650;</span>
+    </div>
   </header>
 
-  <div class="left">
-    <div>
+  <aside class="left-panel">
+    <section>
       <div class="panel-title">Task Queue</div>
       <div class="list" id="taskList"></div>
-    </div>
-    <div>
+    </section>
+
+    <section>
       <div class="panel-title">Problem Log</div>
       <div class="list" id="problemList"></div>
-    </div>
-    <div>
+    </section>
+
+    <section>
       <div class="panel-title">Planet Events</div>
       <div class="timeline" id="timeline"></div>
-    </div>
-  </div>
+    </section>
+  </aside>
 
-  <div class="map-area">
-    <canvas id="sparks"></canvas>
-    <div class="map-grid"></div>
-
-    <div class="map-overlay-top">
-      <span>Global Operations Map</span>
-      <span>Mode: Live • Encryption: On</span>
-    </div>
-
+  <main class="map-area">
     <div id="globe"></div>
-    <div class="radar"></div>
-    <div class="signal"></div>
 
-    <div class="map-overlay-bottom">
-      <div class="legend">
-        <div class="legend-item">
-          <span class="legend-dot legend-dot-critical"></span><span>Critical</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-dot legend-dot-active"></span><span>Active Units</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-dot legend-dot-resolved"></span><span>Resolved</span>
-        </div>
-      </div>
-      <span>Tracking: Orbital • Ground • Signals</span>
-    </div>
-  </div>
+    <!-- Tactical strobes -->
+    <div class="crisis-strobe" id="crisisStrobe"></div>
+    <div class="crisis-echo" id="crisisEcho"></div>
 
-  <div class="right">
-    <div>
+    <!-- Marker labels container -->
+    <div id="markerLabels"></div>
+  </main>
+
+  <aside class="right-panel">
+    <section>
       <div class="panel-title">Live Counters</div>
       <div class="stat-block">
         <div class="stat-row"><span>Active Ops</span><span class="counter" id="ops">7</span></div>
-        <div class="stat-row"><span>Hotspots</span><span class="counter stat-value-critical" id="hotspots">3</span></div>
+        <div class="stat-row"><span>Hotspots</span><span class="counter critical" id="hotspots">3</span></div>
         <div class="stat-row"><span>Teams Deployed</span><span class="counter" id="teams">12</span></div>
-        <div class="stat-row"><span>Comms Status</span><span class="stat-value-ok">STABLE</span></div>
+        <div class="stat-row"><span>Comms Status</span><span class="ok">STABLE</span></div>
       </div>
-    </div>
-    <div>
-      <div class="panel-title">Threat Prediction</div>
+    </section>
+
+    <section>
+      <div class="panel-title">Threat Bars</div>
       <div class="stat-block">
-        <div class="threat-bars">
-          <div style="flex:1;text-align:center;">
-            <div class="threat-bar" id="threat1"></div>
-            <div class="threat-label">NORTH</div>
-          </div>
-          <div style="flex:1;text-align:center;">
-            <div class="threat-bar" id="threat2"></div>
-            <div class="threat-label">EAST</div>
-          </div>
-          <div style="flex:1;text-align:center;">
-            <div class="threat-bar" id="threat3"></div>
-            <div class="threat-label">SOUTH</div>
-          </div>
-          <div style="flex:1;text-align:center;">
-            <div class="threat-bar" id="threat4"></div>
-            <div class="threat-label">WEST</div>
-          </div>
+        <div class="bars">
+          <div class="bar" id="bar1"></div>
+          <div class="bar" id="bar2"></div>
+          <div class="bar" id="bar3"></div>
+          <div class="bar" id="bar4"></div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
+  </aside>
 
-  <footer>
-    <div>SYSTEMS NOMINAL — AUDIO CHANNELS ARMED (CLICK TO ENABLE)</div>
-    <div><span class="indicator-dot"></span> <span class="indicator-dot-red"></span></div>
+  <footer class="footer">
+    SYSTEMS NOMINAL — AUDIO CHANNELS ARMED (CLICK ANYWHERE TO ENABLE)
   </footer>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-// --- DATA WITH REAL COORDS (lat, lon) ---
-const planetEvents = [
-  { name:"Thermal spike",        lat:34.0,  lon:45.0,  level:"CRITICAL" },
-  { name:"Unknown signal",       lat:51.5,  lon:-0.1,  level:"INFO" },
-  { name:"Unit BRAVO contact",   lat:35.7,  lon:139.7, level:"CRITICAL" },
-  { name:"Drone recon",          lat:-33.9, lon:151.2, level:"INFO" },
-  { name:"Sat uplink window",    lat:40.7,  lon:-74.0, level:"INFO" }
-];
+<script src="script.js"></script>
 
-const tasks=["Secure grid A7","Deploy recon drone","Update extraction route","Sync intel with HQ","Verify sat uplink"];
-const problems=["Comms latency spike","Unknown signal detected","Satellite pass window closing","Thermal anomaly in sector D3"];
-
-function fillList(id,arr,cls){
-  const box=document.getElementById(id);
-  arr.forEach(t=>{
-    const div=document.createElement("div");
-    div.className="list-item";
-    div.innerHTML=`<span>${t}</span><span class="tag ${cls}">ACTIVE</span>`;
-    box.append(div);
-  });
-}
-fillList("taskList",tasks,"tag-info");
-fillList("problemList",problems,"tag-critical");
-
-// timeline from planetEvents
-const timeline = document.getElementById("timeline");
-function renderTimelineEntry(ev){
-  const row=document.createElement("div");
-  row.className="timeline-row";
-  const time=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
-  row.innerHTML = `
-    <span class="timeline-time">${time}</span>
-    <div>${ev.name} — <span class="timeline-level-info">${ev.level}</span></div>
-    <div class="timeline-coord">Lat: ${ev.lat.toFixed(1)}°, Lon: ${ev.lon.toFixed(1)}°</div>
-  `;
-  timeline.prepend(row);
-}
-planetEvents.forEach(e=>renderTimelineEntry(e));
-setInterval(()=>{
-  const ev = planetEvents[Math.floor(Math.random()*planetEvents.length)];
-  renderTimelineEntry(ev);
-},6000);
-
-// counters
-function randomAdjust(id,min,max){
-  const el=document.getElementById(id);
-  let v=parseInt(el.innerText);
-  v+=Math.random()>0.5?1:-1;
-  if(v<min)v=min;if(v>max)v=max;
-  el.innerText=v;
-}
-setInterval(()=>{
-  randomAdjust("ops",4,15);
-  randomAdjust("hotspots",1,8);
-  randomAdjust("teams",5,20);
-},4000);
-
-// threats
-function updateThreats(){
-  for(let i=1;i<=4;i++){
-    const el=document.getElementById("threat"+i);
-    const level=0.2+Math.random()*0.8;
-    el.style.transform="scaleY("+level.toFixed(2)+")";
-  }
-}
-updateThreats();
-setInterval(updateThreats,3500);
-
-// sparks
-const canvas=document.getElementById("sparks");
-const ctx=canvas.getContext("2d");
-function resizeCanvas(){canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;}
-window.addEventListener("resize",resizeCanvas);resizeCanvas();
-let particles=[];
-function spawnParticle(){
-  particles.push({
-    x:Math.random()*canvas.width,
-    y:Math.random()*canvas.height,
-    vx:(Math.random()-0.5)*0.4,
-    vy:-Math.random()*0.6,
-    life:40+Math.random()*40
-  });
-}
-function drawParticles(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  particles.forEach(p=>{
-    p.x+=p.vx;p.y+=p.vy;p.life--;
-    ctx.fillStyle="rgba(255,180,80,"+(p.life/80)+")";
-    ctx.fillRect(p.x,p.y,2,2);
-  });
-  particles=particles.filter(p=>p.life>0);
-  requestAnimationFrame(drawParticles);
-}
-setInterval(spawnParticle,80);
-drawParticles();
-
-// --- 3D EARTH WITH MARKERS ---
-const container=document.getElementById("globe");
-const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(
-  45,
-  container.clientWidth/container.clientHeight,
-  0.1,
-  1000
-);
-camera.position.z=3;
-
-const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
-renderer.setSize(container.clientWidth,container.clientHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-container.appendChild(renderer.domElement);
-
-// Earth
-const geometry=new THREE.SphereGeometry(1,64,64);
-const texture=new THREE.TextureLoader().load(
-  "https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg"
-);
-const material=new THREE.MeshPhongMaterial({
-  map:texture,
-  shininess:5
-});
-const earth=new THREE.Mesh(geometry,material);
-scene.add(earth);
-
-// simple orbit ring for live graphic
-const orbitGeom = new THREE.RingGeometry(1.15,1.17,64);
-const orbitMat  = new THREE.MeshBasicMaterial({color:0x3bb3ff,side:THREE.DoubleSide,transparent:true,opacity:0.35});
-const orbitRing = new THREE.Mesh(orbitGeom,orbitMat);
-orbitRing.rotation.x = Math.PI/3;
-scene.add(orbitRing);
-
-// lights
-const light=new THREE.PointLight(0xffffff,1.2);
-light.position.set(5,3,5);
-scene.add(light);
-const ambient=new THREE.AmbientLight(0x404040,0.6);
-scene.add(ambient);
-
-// markers on globe
-const markerGroup = new THREE.Group();
-scene.add(markerGroup);
-const markerMaterial = new THREE.MeshBasicMaterial({color:0xff3b3b});
-const markerPulseMaterial = new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:0.6});
-const markerLabels = [];
-
-function latLonToVector3(lat,lon,radius){
-  const phi = (90 - lat) * (Math.PI/180);
-  const theta = (lon + 180) * (Math.PI/180);
-  const x = -radius * Math.sin(phi) * Math.cos(theta);
-  const z =  radius * Math.sin(phi) * Math.sin(theta);
-  const y =  radius * Math.cos(phi);
-  return new THREE.Vector3(x,y,z);
-}
-
-planetEvents.forEach((ev,i)=>{
-  const base = new THREE.Mesh(new THREE.SphereGeometry(0.03,16,16), markerMaterial);
-  const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.05,16,16), markerPulseMaterial);
-  const pos = latLonToVector3(ev.lat,ev.lon,1.02);
-  base.position.copy(pos);
-  pulse.position.copy(pos);
-  markerGroup.add(base);
-  markerGroup.add(pulse);
-
-  // 2D label
-  const label = document.createElement("div");
-  label.className = "marker-label";
-  label.innerHTML = `<strong>${ev.name}</strong><br><span class="coord">${ev.lat.toFixed(1)}°, ${ev.lon.toFixed(1)}°</span>`;
-  container.appendChild(label);
-  markerLabels.push({mesh:base,label});
-});
-
-// animate
-const clock = new THREE.Clock();
-function animate(){
-  requestAnimationFrame(animate);
-  const t = clock.getElapsedTime();
-
-  earth.rotation.y += 0.0025;
-  markerGroup.rotation.y += 0.0025;
-  orbitRing.rotation.z += 0.0008;
-
-  // pulse markers
-  markerGroup.children.forEach((m,idx)=>{
-    if(idx%2===1){ // pulse spheres
-      const s = 1 + 0.4*Math.sin(t*3 + idx);
-      m.scale.set(s,s,s);
-      m.material.opacity = 0.3 + 0.3*(1+Math.sin(t*3+idx))/2;
-    }
-  });
-
-  // project labels
-  markerLabels.forEach(({mesh,label})=>{
-    const vector = mesh.position.clone();
-    vector.project(camera);
-    const x = (vector.x * 0.5 + 0.5) * container.clientWidth;
-    const y = (-vector.y * 0.5 + 0.5) * container.clientHeight;
-    label.style.transform = `translate(-50%, -50%) translate(${x}px,${y}px)`;
-    label.style.opacity = vector.z > 0 ? "1" : "0"; // hide when behind planet
-  });
-
-  renderer.render(scene,camera);
-}
-animate();
-
-window.addEventListener("resize",()=>{
-  renderer.setSize(container.clientWidth,container.clientHeight);
-  camera.aspect=container.clientWidth/container.clientHeight;
-  camera.updateProjectionMatrix();
-});
-
-// audio (click to enable)
-let audioCtx;
-function initAudio(){
-  if(audioCtx)return;
-  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  const bufferSize=2*audioCtx.sampleRate;
-  const noiseBuffer=audioCtx.createBuffer(1,bufferSize,audioCtx.sampleRate);
-  const output=noiseBuffer.getChannelData(0);
-  for(let i=0;i<bufferSize;i++){output[i]=(Math.random()*2-1)*0.08;}
-  const whiteNoise=audioCtx.createBufferSource();
-  whiteNoise.buffer=noiseBuffer;
-  whiteNoise.loop=true;
-  const filter=audioCtx.createBiquadFilter();
-  filter.type="bandpass";filter.frequency.value=2000;filter.Q.value=1;
-  const gain=audioCtx.createGain();gain.gain.value=0.22;
-  whiteNoise.connect(filter).connect(gain).connect(audioCtx.destination);
-  whiteNoise.start();
-  function beep(){
-    const osc=audioCtx.createOscillator();
-    const g=audioCtx.createGain();
-    osc.frequency.value=600+Math.random()*400;
-    g.gain.setValueAtTime(0.12,audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.15);
-    osc.connect(g).connect(audioCtx.destination);
-    osc.start();osc.stop(audioCtx.currentTime+0.2);
-  }
-  setInterval(()=>{if(Math.random()>0.6)beep();},2600);
-}
-window.addEventListener("click",initAudio,{once:true});
-</script>
 </body>
 </html>
